@@ -7,10 +7,13 @@ use Airalo\Helpers\EasyAccess;
 use Airalo\Helpers\Signature;
 use Airalo\Resources\CurlResource;
 use Airalo\Resources\MultiCurlResource;
+use Airalo\Services\InstallationInstructionsService;
 use Airalo\Services\OAuthService;
 use Airalo\Services\OrderService;
 use Airalo\Services\PackagesService;
+use Airalo\Services\SimService;
 use Airalo\Services\TopupService;
+use Airalo\Services\VoucherService;
 use Airalo\Tests\Mock\AiraloMock;
 
 class AiraloStatic
@@ -23,7 +26,10 @@ class AiraloStatic
     private static OAuthService $oauth;
     private static PackagesService $packages;
     private static OrderService $order;
+    private static VoucherService $voucher;
     private static TopupService $topup;
+    private static InstallationInstructionsService $instruction;
+    private static SimService $sim;
 
     /**
      * @param mixed $config
@@ -153,6 +159,41 @@ class AiraloStatic
     }
 
     /**
+     * @param int $usageLimit
+     * @param int $amount
+     * @param int $quantity
+     * @param ?bool $isPaid
+     * @param ?string $voucherCode
+     * @return EasyAccess|null
+     */
+    public function voucher(int $usageLimit, int $amount, int $quantity, ?bool $isPaid = false, string $voucherCode = null): ?EasyAccess
+    {
+        self::checkInitialized();
+
+        return self::$voucher->createVoucher([
+            'voucher_code' => $voucherCode,
+            'usage_limit' => $usageLimit,
+            'amount' => $amount,
+            'quantity' => $quantity,
+            'is_paid' => $isPaid
+        ]);
+    }
+
+    /**
+     * @param array<int, array{package_id: string, quantity: int}> $vouchers
+     * @return EasyAccess|null
+     * @throws AiraloException
+     */
+    public function esimVouchers(array $vouchers): ?EasyAccess
+    {
+        self::checkInitialized();
+
+        return self::$voucher->createEsimVoucher([
+            'vouchers' => $vouchers
+        ]);
+    }
+
+    /**
      * @param array $packages
      * @param ?string $description
      * @return EasyAccess|null
@@ -182,6 +223,31 @@ class AiraloStatic
             'package_id' => $packageId,
             'iccid' => $iccid,
             'description' => $description ?? 'Topup placed via Airalo PHP SDK',
+        ]);
+    }
+
+    /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public static function getSimInstructions(string $iccid,string $lang = 'en'): ?EasyAccess
+    {
+        self::checkInitialized();
+
+        return self::$instruction->getInstructions([
+            'iccid' => $iccid,
+            'language' => $lang
+        ]);
+    }
+
+    /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public function simUsage(string $iccid): ?EasyAccess
+    {
+        return self::$sim->simUsage([
+            'iccid' => $iccid
         ]);
     }
 
@@ -216,7 +282,12 @@ class AiraloStatic
         self::$packages = self::$pool['packages'] ?? new PackagesService(self::$config, self::$curl, $token);
         self::$order = self::$pool['order']
             ?? new OrderService(self::$config, self::$curl, self::$multiCurl, self::$signature, $token);
+        self::$instruction = self::$pool['instruction']
+            ?? new InstallationInstructionsService(self::$config, self::$curl, $token);
+        self::$voucher = self::$pool['voucher']
+            ?? new VoucherService(self::$config, self::$curl, self::$signature, $token);
         self::$topup = self::$pool['topup'] ?? new TopupService(self::$config, self::$curl, self::$signature, $token);
+        self::$sim = self::$pool['sim'] ?? new SimService(self::$config, self::$curl, $token);
     }
 
     /**

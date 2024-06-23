@@ -7,10 +7,13 @@ use Airalo\Helpers\EasyAccess;
 use Airalo\Helpers\Signature;
 use Airalo\Resources\CurlResource;
 use Airalo\Resources\MultiCurlResource;
+use Airalo\Services\InstallationInstructionsService;
 use Airalo\Services\OAuthService;
 use Airalo\Services\OrderService;
 use Airalo\Services\PackagesService;
+use Airalo\Services\SimService;
 use Airalo\Services\TopupService;
+use Airalo\Services\VoucherService;
 use Airalo\Tests\Mock\AiraloMock;
 
 class Airalo
@@ -31,7 +34,10 @@ class Airalo
     private OAuthService $oauth;
     private PackagesService $packages;
     private OrderService $order;
+    private InstallationInstructionsService $instruction;
     private TopupService $topup;
+    private SimService $sim;
+    private VoucherService $voucher;
 
     /**
      * @param mixed $config
@@ -172,6 +178,60 @@ class Airalo
     }
 
     /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public function getSimInstructions(string $iccid,string $lang = 'en'): ?EasyAccess
+    {
+        return $this->instruction->getInstructions([
+            'iccid' => $iccid,
+            'language' => $lang,
+        ]);
+    }
+
+    /**
+     * @param int $usageLimit
+     * @param int $amount
+     * @param int $quantity
+     * @param ?bool $isPaid
+     * @param ?string $voucherCode
+     * @return EasyAccess|null
+     */
+    public function voucher(int $usageLimit, int $amount, int $quantity, ?bool $isPaid = false, string $voucherCode = null): ?EasyAccess
+    {
+        return $this->voucher->createVoucher([
+            'voucher_code' => $voucherCode,
+            'usage_limit' => $usageLimit,
+            'amount' => $amount,
+            'quantity' => $quantity,
+            'is_paid' => $isPaid,
+        ]);
+    }
+
+    /**
+     * @param array<int, array{package_id: string, quantity: int}> $vouchers
+     * @return EasyAccess|null
+     * @throws AiraloException
+     */
+    public function esimVouchers(array $vouchers): ?EasyAccess
+    {
+        return $this->voucher->createEsimVoucher([
+            'vouchers' => $vouchers
+        ]);
+    }
+
+    /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public function simUsage(string $iccid): ?EasyAccess
+    {
+        return $this->sim->simUsage([
+            'iccid' => $iccid
+        ]);
+    }
+
+    /**
      * @param mixed $config
      * @return void
      * @throws AiraloException
@@ -183,7 +243,6 @@ class Airalo
         $this->multiCurl = self::$pool['multiCurl'] ?? new MultiCurlResource($this->config);
         $this->signature = self::$pool['signature'] ?? new Signature($this->config->get('client_secret'));
     }
-
     /**
      * @return void
      * @throws AiraloException
@@ -196,7 +255,12 @@ class Airalo
         $this->packages = self::$pool['packages'] ?? new PackagesService($this->config, $this->curl, $token);
         $this->order = self::$pool['order']
             ?? new OrderService($this->config, $this->curl, $this->multiCurl, $this->signature, $token);
+        $this->instruction = self::$pool['instruction']
+            ?? new InstallationInstructionsService($this->config, $this->curl, $token);
+        $this->voucher = self::$pool['voucher']
+            ?? new VoucherService($this->config, $this->curl, $this->signature, $token);
         $this->topup = self::$pool['topup'] ?? new TopupService($this->config, $this->curl, $this->signature, $token);
+        $this->sim = self::$pool['sim'] ?? new SimService($this->config, $this->curl, $token);
     }
 
     /**

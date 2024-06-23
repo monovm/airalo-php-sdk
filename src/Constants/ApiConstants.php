@@ -12,13 +12,20 @@ final class ApiConstants
 
     public const PACKAGES_SLUG = 'packages';
 
+    public const INSTRUCTIONS_SLUG = 'instructions';
+
     public const COMPATIBILITY_SLUG = 'compatible-devices';
 
     public const ORDERS_SLUG = 'orders';
 
+    public const VOUCHERS_SLUG = 'voucher/airmoney';
+
+    public const VOUCHERS_ESIM_SLUG = 'voucher/esim';
+
     public const TOPUPS_SLUG = 'orders/topups';
 
     public const SIMS_SLUG = 'sims';
+    public const SIMS_USAGE = 'usage';
 
     public const NOTIFICATIONS_SLUG = 'notifications';
 }

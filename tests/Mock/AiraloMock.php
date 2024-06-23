@@ -10,12 +10,20 @@ class AiraloMock
     private $packages;
     private $orders;
     private $topups;
+    private $instructions;
+    private $vouchers;
+
+    private $esimVouchers;
 
     public function __construct()
     {
         $this->packages = [];
         $this->orders = [];
         $this->topups = [];
+        $this->simUsage = [];
+        $this->instructions = [];
+        $this->vouchers = [];
+        $this->esimVouchers = [];
     }
 
     /**
@@ -41,12 +49,34 @@ class AiraloMock
     }
 
     /**
+     * @param array $simUsage
+     * @return AiraloMock
+     */
+    public function setSimUsage(array $usage): AiraloMock
+    {
+        $this->simUsage = $usage;
+
+        return $this;
+    }
+
+    /**
      * @param array $topups
      * @return AiraloMock
      */
     public function setTopups(array $topups): AiraloMock
     {
         $this->topups = $topups;
+
+        return $this;
+    }
+
+    /**
+     * @param array $instructions
+     * @return AiraloMock
+     */
+    public function setInstructions(array $instructions): AiraloMock
+    {
+        $this->instructions = $instructions;
 
         return $this;
     }
@@ -160,6 +190,61 @@ class AiraloMock
      * @return EasyAccess|null
      */
     public function topup(string $packageId, string $iccid, ?string $description = null): ?EasyAccess
+    {
+        $topup = [
+            'package_id' => $packageId,
+            'iccid' => $iccid,
+            'description' => $description ?? 'Topup placed via AiraloMock',
+        ];
+
+        return new EasyAccess(!empty($this->topups) ? $this->topups : $topup);
+    }
+
+    /**
+     * @param int $usageLimit
+     * @param int $amount
+     * @param int $quantity
+     * @param ?bool $isPaid
+     * @param ?string $voucherCode
+     * @return EasyAccess|null
+     */
+    public function voucher(int $usageLimit, int $amount, int $quantity, ?bool $isPaid = false, string $voucherCode = null): ?EasyAccess
+    {
+        $voucher = [
+            'voucher_code' => $voucherCode,
+            'usage_limit' => $usageLimit,
+            'amount' => $amount,
+            'quantity' => $quantity,
+            'is_paid' => $isPaid,
+        ];
+
+        return new EasyAccess(!empty($this->vouchers) ? $this->vouchers : $voucher);
+    }
+
+    public function esimVouchers(array $vouchers):? EasyAccess
+    {
+        return new EasyAccess(!empty($this->esimVouchers) ? $this->esimVouchers : $vouchers);
+    }
+
+
+    /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public function simUsage(string $iccid): ?EasyAccess
+    {
+        $usage = [
+            'iccid' => $iccid,
+        ];
+
+        return new EasyAccess(!empty($this->simUsage) ? $this->simUsage : $usage);
+    }
+
+    /**
+     * @param string $iccid
+     * @return EasyAccess|null
+     */
+    public function getSimInstructions(string $packageId, string $iccid, ?string $description = null): ?EasyAccess
     {
         $topup = [
             'package_id' => $packageId,
