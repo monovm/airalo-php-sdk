@@ -33,7 +33,7 @@ class Config
             ? json_decode(json_encode($data), true)
             : $data;
 
-        $jsonError = json_last_error();
+        // $jsonError = json_last_error();
 
         // if ($jsonError !== JSON_ERROR_NONE) {
         //     throw new AiraloException("Invalid config data provided, error code: $jsonError");
