@@ -35,9 +35,9 @@ class Config
 
         $jsonError = json_last_error();
 
-        if ($jsonError !== JSON_ERROR_NONE && $jsonError !== JSON_ERROR_UTF8) {
-            throw new AiraloException("Invalid config data provided, error code: $jsonError");
-        }
+        // if ($jsonError !== JSON_ERROR_NONE) {
+        //     throw new AiraloException("Invalid config data provided, error code: $jsonError");
+        // }
 
         $this->validate();
     }
