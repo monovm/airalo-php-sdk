@@ -1,7 +1,7 @@
 {
     "name": "airalo/sdk",
     "description": "Airalo's Partner API PHP SDK",
-    "type": "project",
+    "type": "library",
     "require": {
         "phpunit/phpunit": "^9.5||^10.5",
         "php": ">=7.4"
